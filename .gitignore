@@ -12,8 +12,9 @@
 # testing
 /coverage
 
-# production
-/build
+# Parcel
+.cache
+dist/
 
 # misc
 .DS_Store
