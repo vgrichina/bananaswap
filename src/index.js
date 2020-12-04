@@ -7,8 +7,7 @@ const { networkId } = getConfig(process.env.NODE_ENV || 'development')
 
 import { utils } from 'near-api-js'
 
-// global variable used throughout
-let currentGreeting
+import Big from 'big.js';
 
 const submitButton = document.querySelector('form button')
 
@@ -60,6 +59,14 @@ document.querySelector('form').onsubmit = async (event) => {
 
 document.querySelector('#sign-in-button').onclick = login
 document.querySelector('#sign-out-button').onclick = logout
+
+document.querySelector('#berriesToBuy').onchange = async (event) => {
+    let nearPrice = await window.contract.getBuyPrice({ berries: event.target.value });
+    // TODO: Convert from nomination
+    nearPrice = Big(nearPrice).mul('1.01').toFixed(0);
+
+    document.querySelector('#maxNearPrice').value = utils.format.formatNearAmount(nearPrice, 5); 
+}
 
 // Display the signed-out-flow container
 function signedOutFlow() {

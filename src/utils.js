@@ -18,7 +18,7 @@ export async function initContract() {
   // Initializing our contract APIs by contract name and configuration
   window.contract = await new Contract(window.walletConnection.account(), nearConfig.contractName, {
     // View methods are read only. They don't modify the state, but usually return some value.
-    viewMethods: [],
+    viewMethods: ['getSellPrice', 'getBuyPrice'],
     // Change methods can modify the state. But you don't receive the returned value when called.
     changeMethods: ['start', 'stop', 'buy', 'on_receive_with_vault'],
   })

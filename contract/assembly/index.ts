@@ -46,9 +46,7 @@ class TransferRawArgs {
     amount: u128;
 }
 
-export function buy(berries: u128): ContractPromise {
-    assertPoolStarted();
-
+export function getBuyPrice(berries: u128): u128 {
     const internalBerries = storage.getSome<u128>('berries');
     assert(berries < internalBerries, 'not enough berries in pool');
 
@@ -57,29 +55,28 @@ export function buy(berries: u128): ContractPromise {
     const newNearAmount =  internalBerries * currentNearAmount / resultingBerries;
     // TODO: What to do with remainder?
     const nearPrice = newNearAmount - currentNearAmount;
-
-    // logging.log('internalBerries * currentNearAmount: ' + (internalBerries * currentNearAmount).toString());
-    // logging.log('nearPrice: ' + nearPrice.toString());
-    // logging.log('currentNearAmount: ' + currentNearAmount.toString());
-    // logging.log('newNearAmount: ' + newNearAmount.toString());
-    // logging.log('internalBerries: ' + internalBerries.toString());
-    // logging.log('newBerries: ' + resultingBerries.toString());
-
-    assert(nearPrice <= context.attachedDeposit, 'not enough NEAR attached, required ' + nearPrice.toString());
     // TODO: commission
+    return nearPrice;
+}
 
-    storage.set('berries', resultingBerries);
+export function buy(berries: u128): ContractPromise {
+    assertPoolStarted();
+
+    const nearPrice = getBuyPrice(berries);
+    assert(nearPrice <= context.attachedDeposit, 'not enough NEAR attached, required ' + nearPrice.toString());
+
+    storage.set('berries', storage.getSome<u128>('berries') - berries);
 
     // TODO: Send back extra NEAR
+    ContractPromiseBatch.create(context.predecessor)
+        .transfer(context.attachedDeposit - nearPrice);
 
     // TODO: Do we need to lock somehow before transfer end?
     return ContractPromise.create<TransferRawArgs>(BERRIES_CONTRACT, 'transfer_raw',
         { receiver_id: context.predecessor, amount: berries }, 5000000000000)
 }
 
-function sell(sender_id: string, berries: u128, nearAmount: u128): u128 {
-    assertPoolStarted();
-
+export function getSellPrice(nearAmount: u128): u128 {
     const currentNearAmount = context.accountBalance - MIN_BALANCE;
     assert(nearAmount < currentNearAmount, 'not enough NEAR in pool');
 
@@ -88,17 +85,18 @@ function sell(sender_id: string, berries: u128, nearAmount: u128): u128 {
     const newBerries = currentBerries * currentNearAmount / newNear;
     // TODO: What to do with remainder?
     const berriesPrice = newBerries - currentBerries;
-    // logging.log('nearAmount: ' + nearAmount.toString());
-    // logging.log('currentNearAmount: ' + currentNearAmount.toString());
-    // logging.log('newNear: ' + newNear.toString());
-    // logging.log('currentBerries: ' + currentBerries.toString());
-    // logging.log('newBerries: ' + newBerries.toString());
-    assert(berriesPrice <= berries, 'not enough berries attached, required ' + berriesPrice.toString());
     // TODO: commission
+    return berriesPrice;
+}
+
+function sell(sender_id: string, berries: u128, nearAmount: u128): u128 {
+    assertPoolStarted();
+
+    const berriesPrice = getSellPrice(nearAmount);
+    assert(berriesPrice <= berries, 'not enough berries attached, required ' + berriesPrice.toString());
 
     // TODO: Do we need to lock somehow before transfer end?
-
-    storage.set('berries', newBerries);
+    storage.set('berries', storage.getSome<u128>('berries') - berriesPrice);
     // TODO: Wait somehow for this promise?
     ContractPromiseBatch.create(sender_id).transfer(nearAmount);
 
