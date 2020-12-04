@@ -16,6 +16,7 @@ import { context, ContractPromise, ContractPromiseBatch, logging, storage, u128 
 
 const BERRIES_CONTRACT = 'berryclub.ek.near';
 const NEAR_NOMINATION = u128.from('1000000000000000000000000');
+const MIN_FRACTION = u128.from('1000000000000');
 const MIN_BALANCE = NEAR_NOMINATION * u128.from(10);
 
 function assertOwner(): void {
@@ -47,14 +48,17 @@ class TransferRawArgs {
 }
 
 export function getBuyPrice(berries: u128): u128 {
-    const internalBerries = storage.getSome<u128>('berries');
+    const internalBerries = storage.getSome<u128>('berries') / MIN_FRACTION;
+    berries = berries / MIN_FRACTION;
+    assert(berries > u128.Zero, 'cannot exchange less than ' + MIN_FRACTION.toString() + ' berries');
     assert(berries < internalBerries, 'not enough berries in pool');
 
     const resultingBerries = internalBerries - berries;
-    const currentNearAmount = context.accountBalance - MIN_BALANCE;
+    const currentNearAmount = (context.accountBalance - MIN_BALANCE) / MIN_FRACTION;
     const newNearAmount =  internalBerries * currentNearAmount / resultingBerries;
+    logging.log('newNearAmount: ' + newNearAmount.toString());
     // TODO: What to do with remainder?
-    const nearPrice = newNearAmount - currentNearAmount;
+    const nearPrice = (newNearAmount - currentNearAmount) * MIN_FRACTION;
     // TODO: commission
     return nearPrice;
 }

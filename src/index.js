@@ -27,7 +27,7 @@ document.querySelector('form').onsubmit = async (event) => {
 
     try {
         await window.contract.buy({
-            berries: form.querySelector('#berriesToBuy').value
+            berries: parseBerriesAmount(form.querySelector('#berriesToBuy').value)
         }, BOATLOAD_OF_GAS, utils.format.parseNearAmount(form.querySelector('#maxNearPrice').value));
     } catch (e) {
         alert(
@@ -60,8 +60,14 @@ document.querySelector('form').onsubmit = async (event) => {
 document.querySelector('#sign-in-button').onclick = login
 document.querySelector('#sign-out-button').onclick = logout
 
+const BERRIES_NOMINATION = Big(10).pow(18)
+
+function parseBerriesAmount(berries) {
+    return Big(berries).mul(BERRIES_NOMINATION).toFixed(0);
+}
+
 document.querySelector('#berriesToBuy').onchange = async (event) => {
-    let nearPrice = await window.contract.getBuyPrice({ berries: event.target.value });
+    let nearPrice = await window.contract.getBuyPrice({ berries: parseBerriesAmount(event.target.value) });
     // TODO: Convert from nomination
     nearPrice = Big(nearPrice).mul('1.01').toFixed(0);
 
