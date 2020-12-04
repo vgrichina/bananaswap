@@ -4,10 +4,10 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "npm run build:contract && npm run build:web",
-    "build:contract": "node contract/compile -v",
+    "build:contract": "cd contract && npx asb --verbose --target release",
     "build:contract:debug": "cd contract && npx asb --verbose --target debug",
     "build:web": "parcel build src/index.html --public-url ./",
-    "dev:deploy:contract": "near dev-deploy",
+    "dev:deploy:contract": "near dev-deploy --wasmFile contract/build/debug/greeter.wasm",
     "deploy:contract": "near deploy",
     "deploy:pages": "gh-pages -d dist/",
     "deploy": "npm run build && npm run deploy:contract && npm run deploy:pages",
