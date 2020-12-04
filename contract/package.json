@@ -4,6 +4,7 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "as-bignum": "^0.2.7",
     "near-sdk-as": "^2.0.0"
   },
   "devDependencies": {
