@@ -9,5 +9,9 @@
   },
   "devDependencies": {
     "shelljs": "^0.8.4"
-  }
+  },
+"resolutions": {
+    "as-bignum": "0.2.7"
 }
+}
+

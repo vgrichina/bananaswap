@@ -57,6 +57,14 @@ export function buy(berries: u128): ContractPromise {
     const newNearAmount =  internalBerries * currentNearAmount / resultingBerries;
     // TODO: What to do with remainder?
     const nearPrice = newNearAmount - currentNearAmount;
+
+    // logging.log('internalBerries * currentNearAmount: ' + (internalBerries * currentNearAmount).toString());
+    // logging.log('nearPrice: ' + nearPrice.toString());
+    // logging.log('currentNearAmount: ' + currentNearAmount.toString());
+    // logging.log('newNearAmount: ' + newNearAmount.toString());
+    // logging.log('internalBerries: ' + internalBerries.toString());
+    // logging.log('newBerries: ' + resultingBerries.toString());
+
     assert(nearPrice <= context.attachedDeposit, 'not enough NEAR attached, required ' + nearPrice.toString());
     // TODO: commission
 

@@ -30,10 +30,6 @@ main {
 }
 
 h1 {
-  background-image: url(assets/logo-black.svg);
-  background-position: center 1em;
-  background-repeat: no-repeat;
-  background-size: auto 1.5em;
   margin-top: 0;
   padding: 3.5em 0 0.5em;
   text-align: center;
@@ -178,9 +174,6 @@ aside footer *:last-child {
     --gray: #aaa;
     --shadow: #2a2a2a;
     --light-gray: #444;
-  }
-  h1 {
-    background-image: url(assets/logo-white.svg);
   }
   input:focus {
     box-shadow: 0 0 10em rgba(255, 255, 255, 0.02) inset;
