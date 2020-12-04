@@ -40,7 +40,13 @@ function assertPoolStarted(): void {
     assert(storage.contains('started'), 'pool not started yet');
 }
 
-export function buy(berries: u128): ContractPromiseBatch {
+@nearBindgen
+class TransferRawArgs {
+    receiver_id: string;
+    amount: u128;
+}
+
+export function buy(berries: u128): ContractPromise {
     assertPoolStarted();
 
     const internalBerries = storage.getSome<u128>('berries');
@@ -52,15 +58,15 @@ export function buy(berries: u128): ContractPromiseBatch {
     // TODO: What to do with remainder?
     const nearPrice = newNearAmount - currentNearAmount;
     assert(nearPrice <= context.attachedDeposit, 'not enough NEAR attached, required ' + nearPrice.toString());
+    // TODO: commission
 
     storage.set('berries', resultingBerries);
 
-    // TODO: Do we need to lock somehow before transfer end?
-    // TODO: Transfer berries, refund NEAR
-    return ContractPromiseBatch.create(context.predecessor)
-        .transfer(nearPrice);
+    // TODO: Send back extra NEAR
 
-    // TODO: commission, etc
+    // TODO: Do we need to lock somehow before transfer end?
+    return ContractPromise.create<TransferRawArgs>(BERRIES_CONTRACT, 'transfer_raw',
+        { receiver_id: context.predecessor, amount: berries }, 5000000000000)
 }
 
 function sell(sender_id: string, berries: u128, nearAmount: u128): u128 {
@@ -80,6 +86,7 @@ function sell(sender_id: string, berries: u128, nearAmount: u128): u128 {
     // logging.log('currentBerries: ' + currentBerries.toString());
     // logging.log('newBerries: ' + newBerries.toString());
     assert(berriesPrice <= berries, 'not enough berries attached, required ' + berriesPrice.toString());
+    // TODO: commission
 
     // TODO: Do we need to lock somehow before transfer end?
 
