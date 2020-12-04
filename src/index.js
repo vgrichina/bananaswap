@@ -70,35 +70,23 @@ function signedOutFlow() {
 function signedInFlow() {
     document.querySelector('#signed-in-flow').style.display = 'block'
 
-    document.querySelectorAll('[data-behavior=account-id]').forEach(el => {
+    document.querySelectorAll('.accountId').forEach(el => {
         el.innerText = window.accountId
     })
-
-    // populate links in the notification box
-    const accountLink = document.querySelector('[data-behavior=notification] a:nth-of-type(1)')
-    accountLink.href = accountLink.href + window.accountId
-    accountLink.innerText = '@' + window.accountId
-    const contractLink = document.querySelector('[data-behavior=notification] a:nth-of-type(2)')
-    contractLink.href = contractLink.href + window.contract.contractId
-    contractLink.innerText = '@' + window.contract.contractId
-
-    // update with selected networkId
-    accountLink.href = accountLink.href.replace('testnet', networkId)
-    contractLink.href = contractLink.href.replace('testnet', networkId)
 
     fetchGreeting()
 }
 
 // update global currentGreeting variable; update DOM with it
 async function fetchGreeting() {
-    currentGreeting = await contract.getGreeting({ accountId: window.accountId })
-    document.querySelectorAll('[data-behavior=greeting]').forEach(el => {
-        // set divs, spans, etc
-        el.innerText = currentGreeting
+    // currentGreeting = await contract.getGreeting({ accountId: window.accountId })
+    // document.querySelectorAll('[data-behavior=greeting]').forEach(el => {
+    //     // set divs, spans, etc
+    //     el.innerText = currentGreeting
 
-        // set input elements
-        el.value = currentGreeting
-    })
+    //     // set input elements
+    //     el.value = currentGreeting
+    // })
 }
 
 // `nearInitPromise` gets called on page load

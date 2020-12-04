@@ -20,9 +20,12 @@
   </main>
 
   <div id="signed-in-flow" style="display: none">
-    <button class="link" style="float: right" id="sign-out-button">
-      Sign out
-    </button>
+    <p style="float: right">
+      Signed in as: <b class="accountId"></b>
+      <a id="sign-out-button" style="margin-left: 0.5em;">
+        Sign out
+      </a>
+    </p>
     <main>
       <h1>Trade 🍌 for NEAR tokens</h1>
 
@@ -61,16 +64,6 @@
       </p>
     </main>
   </div>
-
-  <aside data-behavior="notification" style="display: none">
-    <a target="_blank" href="https://explorer.testnet.near.org/accounts/"></a>
-    called method: 'setGreeting' in contract:
-    <a target="_blank" href="https://explorer.testnet.near.org/accounts/"></a>
-    <footer>
-      <div>✔ Succeeded</div>
-      <div>Just now</div>
-    </footer>
-  </aside>
 
   <script src="./index.js"></script>
 </body>
