@@ -96,16 +96,12 @@ function signedInFlow() {
     fetchGreeting()
 }
 
-// update global currentGreeting variable; update DOM with it
 async function fetchGreeting() {
-    // currentGreeting = await contract.getGreeting({ accountId: window.accountId })
-    // document.querySelectorAll('[data-behavior=greeting]').forEach(el => {
-    //     // set divs, spans, etc
-    //     el.innerText = currentGreeting
-
-    //     // set input elements
-    //     el.value = currentGreeting
-    // })
+    const account = await window.walletConnection.account();
+    const { total: accountBalance } = await account.getAccountBalance();
+    document.querySelector('#nearBalance').value = utils.format.formatNearAmount(berriesBalance, 5);
+    const berriesBalance = await account.viewFunction('get_balance');
+    document.querySelector('#berriesBalance').value = formatBerryAmount(berriesBalance);
 }
 
 // `nearInitPromise` gets called on page load
