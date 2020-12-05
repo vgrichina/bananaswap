@@ -110,17 +110,18 @@ function sell(sender_id: string, berries: u128, nearAmount: u128): u128 {
 
 @nearBindgen
 class WithdrawFromVaultArgs {
-    vault_id: string;
+    // TODO: Sort out u32/u64/u53 situation
+    vault_id: u32;
     receiver_id: string;
     amount: u128;
 }
 
-function withdrawFromVault(vault_id: string, receiver_id: string, amount: u128): ContractPromise {
+function withdrawFromVault(vault_id: u32, receiver_id: string, amount: u128): ContractPromise {
     return ContractPromise.create<WithdrawFromVaultArgs>(BERRIES_CONTRACT,
         'withdraw_from_vault', { receiver_id, amount, vault_id }, 5000000000000);
 }
 
-export function on_receive_with_vault(sender_id: string, amount: u128, vault_id: string, payload: String): ContractPromise {
+export function on_receive_with_vault(sender_id: string, amount: u128, vault_id: u32, payload: String): ContractPromise {
     assert(context.predecessor == BERRIES_CONTRACT, "can only be called from token contract");
 
     if (payload.startsWith('sell:')) {
