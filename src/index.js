@@ -39,7 +39,7 @@ const handleSubmit = handler => async (event) => {
 
 document.querySelector('#buyForm').onsubmit = handleSubmit(async form => {
     await window.contract.buy({
-        berries: parseBerriesAmount(form.querySelector('#berriesToBuy').value)
+        berries: parseBerryAmount(form.querySelector('#berriesToBuy').value)
     }, BOATLOAD_OF_GAS, utils.format.parseNearAmount(form.querySelector('#maxNearPrice').value));
 });
 
@@ -47,7 +47,7 @@ document.querySelector('#sellForm').onsubmit = handleSubmit(async form => {
     const account = await window.walletConnection.account();
     await account.functionCall(BERRIES_CONTRACT, 'transfer_with_vault', {
         receiver_id: window.contract.contractId,
-        amount: formatBerryAmount(form.querySelector('#maxBerriesPrice').value),
+        amount: parseBerryAmount(form.querySelector('#maxBerriesPrice').value),
         payload: `sell:${utils.format.parseNearAmount(form.querySelector('#nearToBuy').value)}`
     }, BOATLOAD_OF_GAS, '1');
 });
@@ -58,7 +58,7 @@ document.querySelector('#sign-out-button').onclick = logout
 
 const BERRIES_NOMINATION = Big(10).pow(18)
 
-function parseBerriesAmount(berries) {
+function parseBerryAmount(berries) {
     return Big(berries).mul(BERRIES_NOMINATION).toFixed(0);
 }
 
@@ -67,7 +67,7 @@ function formatBerryAmount(berries, fracDigits = 5) {
 }
 
 document.querySelector('#berriesToBuy').onchange = async (event) => {
-    let nearPrice = await window.contract.getBuyPrice({ berries: parseBerriesAmount(event.target.value) });
+    let nearPrice = await window.contract.getBuyPrice({ berries: parseBerryAmount(event.target.value) });
     nearPrice = Big(nearPrice).mul('1.01').toFixed(0);
 
     document.querySelector('#maxNearPrice').value = utils.format.formatNearAmount(nearPrice, 5); 
