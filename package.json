@@ -4,8 +4,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "npm run build:contract && npm run build:web",
-    "build:contract": "cd contract && asb --verbose --target release",
-    "build:contract:debug": "cd contract && asb --verbose --target debug",
+    "build:contract": "cd contract && npm run build:release",
+    "build:contract:debug": "cd contract && npm run build:debug",
     "build:web": "parcel build src/index.html --public-url ./",
     "dev:deploy:contract": "near dev-deploy --wasmFile contract/build/debug/greeter.wasm",
     "deploy:contract": "near deploy  --wasmFile contract/build/release/greeter.wasm",

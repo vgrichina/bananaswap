@@ -5,6 +5,7 @@
   "private": true,
   "dependencies": {
     "as-bignum": "^0.2.7",
+    "asbuild": "^0.0.8",
     "near-sdk-as": "^2.0.0"
   },
   "devDependencies": {
@@ -12,5 +13,9 @@
   },
   "resolutions": {
     "as-bignum": "0.2.7"
+  },
+  "scripts": {
+    "build:release": "asb --verbose --target release",
+    "build:debug": "asb --verbose --target debug"
   }
 }
