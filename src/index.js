@@ -99,8 +99,8 @@ function signedInFlow() {
 async function fetchGreeting() {
     const account = await window.walletConnection.account();
     const { total: accountBalance } = await account.getAccountBalance();
-    document.querySelector('#nearBalance').value = utils.format.formatNearAmount(berriesBalance, 5);
-    const berriesBalance = await account.viewFunction(BERRIES_CONTRACT, 'get_balance');
+    document.querySelector('#nearBalance').value = utils.format.formatNearAmount(accountBalance, 5);
+    const berriesBalance = await account.viewFunction(BERRIES_CONTRACT, 'get_balance', { account_id: account.accountId });
     document.querySelector('#berriesBalance').value = formatBerryAmount(berriesBalance);
 }
 
