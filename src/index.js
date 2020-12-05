@@ -100,7 +100,7 @@ async function fetchGreeting() {
     const account = await window.walletConnection.account();
     const { total: accountBalance } = await account.getAccountBalance();
     document.querySelector('#nearBalance').value = utils.format.formatNearAmount(berriesBalance, 5);
-    const berriesBalance = await account.viewFunction('get_balance');
+    const berriesBalance = await account.viewFunction(BERRIES_CONTRACT, 'get_balance');
     document.querySelector('#berriesBalance').value = formatBerryAmount(berriesBalance);
 }
 
