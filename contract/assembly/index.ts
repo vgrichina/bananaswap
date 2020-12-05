@@ -74,7 +74,7 @@ export function buy(berries: u128): ContractPromise {
 
     // TODO: Do we need to lock somehow before transfer end?
     return ContractPromise.create<TransferRawArgs>(BERRIES_CONTRACT, 'transfer_raw',
-        { receiver_id: context.predecessor, amount: berries }, 5000000000000)
+        { receiver_id: context.predecessor, amount: berries }, 5000000000000, u128.One);
 }
 
 export function getSellPrice(nearAmount: u128): u128 {
