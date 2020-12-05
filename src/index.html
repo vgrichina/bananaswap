@@ -30,8 +30,8 @@
       <h1>Trade 🍌 for NEAR tokens</h1>
 
       <h2>NEAR → 🍌</h2>
-      <form>
-        <fieldset id="fieldset">
+      <form id="buyForm">
+        <fieldset>
           <label
             for="berriesToBuy"
             style="display: block; margin-bottom: 0.5em"
@@ -51,6 +51,32 @@
           <input
             autocomplete="off"
             id="maxNearPrice"
+          />
+          <button style="border-radius: 5px; display: block; margin-top: 0.5em">Buy</button>
+        </fieldset>
+      </form>
+      <h2>🍌 → NEAR</h2>
+      <form id="sellForm">
+        <fieldset>
+          <label
+            for="nearToBuy"
+            style="display: block; margin-bottom: 0.5em"
+          >
+            Desired NEAR
+          </label>
+          <input
+            autocomplete="off"
+            id="nearToBuy"
+          />
+          <label
+            for="maxBerriesPrice"
+            style="display: block; margin-bottom: 0.5em"
+          >
+            Max 🍌 to sell
+          </label>
+          <input
+            autocomplete="off"
+            id="maxBerriesPrice"
           />
           <button style="border-radius: 5px; display: block; margin-top: 0.5em">Buy</button>
         </fieldset>

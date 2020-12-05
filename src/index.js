@@ -12,23 +12,17 @@ import Big from 'big.js';
 const submitButton = document.querySelector('form button')
 
 const BOATLOAD_OF_GAS = '35000000000000';
+const BERRIES_CONTRACT = 'berryclub.ek.near';
 
-document.querySelector('form').onsubmit = async (event) => {
+
+const handleSubmit = handler => async (event) => {
     event.preventDefault()
 
     const form = event.target;
-
-    // // get elements from the form using their id attribute
-    // const { fieldset, greeting } = event.target.elements
-
-    // // disable the form while the value gets updated on-chain
-    // fieldset.disabled = true
-    form.disabled = true;
+    form.querySelector('fieldset').disabled = true;
 
     try {
-        await window.contract.buy({
-            berries: parseBerriesAmount(form.querySelector('#berriesToBuy').value)
-        }, BOATLOAD_OF_GAS, utils.format.parseNearAmount(form.querySelector('#maxNearPrice').value));
+        await handler(form);
     } catch (e) {
         alert(
             'Something went wrong! ' +
@@ -37,25 +31,27 @@ document.querySelector('form').onsubmit = async (event) => {
         )
         throw e
     } finally {
-        // re-enable the form, whether the call succeeded or failed
-        form.disabled = false
+        form.querySelector('fieldset').disabled = false;
     }
 
-    // disable the save button, since it now matches the persisted value
-    submitButton.disabled = true
-
-    // update the greeting in the UI
     await fetchGreeting()
-
-    // show notification
-    document.querySelector('[data-behavior=notification]').style.display = 'block'
-
-    // remove notification again after css animation completes
-    // this allows it to be shown again next time the form is submitted
-    setTimeout(() => {
-        document.querySelector('[data-behavior=notification]').style.display = 'none'
-    }, 11000)
 }
+
+document.querySelector('#buyForm').onsubmit = handleSubmit(async form => {
+    await window.contract.buy({
+        berries: parseBerriesAmount(form.querySelector('#berriesToBuy').value)
+    }, BOATLOAD_OF_GAS, utils.format.parseNearAmount(form.querySelector('#maxNearPrice').value));
+});
+
+document.querySelector('#sellForm').onsubmit = handleSubmit(async form => {
+    const account = await window.walletConnection.account();
+    await account.functionCall(BERRIES_CONTRACT, 'transfer_with_vault', {
+        receiver_id: window.contract.contractId,
+        amount: formatBerryAmount(form.querySelector('#maxBerriesPrice').value),
+        payload: `sell:${utils.format.parseNearAmount(form.querySelector('#nearToBuy').value)}`
+    }, BOATLOAD_OF_GAS, '1');
+});
+
 
 document.querySelector('#sign-in-button').onclick = login
 document.querySelector('#sign-out-button').onclick = logout
@@ -66,12 +62,22 @@ function parseBerriesAmount(berries) {
     return Big(berries).mul(BERRIES_NOMINATION).toFixed(0);
 }
 
+function formatBerryAmount(berries, fracDigits = 5) {
+    return Big(berries).div(BERRIES_NOMINATION).toFixed(fracDigits);
+}
+
 document.querySelector('#berriesToBuy').onchange = async (event) => {
     let nearPrice = await window.contract.getBuyPrice({ berries: parseBerriesAmount(event.target.value) });
-    // TODO: Convert from nomination
     nearPrice = Big(nearPrice).mul('1.01').toFixed(0);
 
     document.querySelector('#maxNearPrice').value = utils.format.formatNearAmount(nearPrice, 5); 
+}
+
+document.querySelector('#nearToBuy').onchange = async (event) => {
+    let berryPrice = await window.contract.getSellPrice({ nearAmount: utils.format.parseNearAmount(event.target.value) });
+    berryPrice = Big(berryPrice).mul('1.01').toFixed(0);
+
+    document.querySelector('#maxBerriesPrice').value = formatBerryAmount(berryPrice, 5); 
 }
 
 // Display the signed-out-flow container

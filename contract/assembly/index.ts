@@ -81,14 +81,17 @@ export function buy(berries: u128): ContractPromise {
 }
 
 export function getSellPrice(nearAmount: u128): u128 {
-    const currentNearAmount = context.accountBalance - MIN_BALANCE;
+    const currentNearAmount = (context.accountBalance - MIN_BALANCE) / MIN_FRACTION;
+    nearAmount = nearAmount / MIN_FRACTION;
+    assert(nearAmount > u128.Zero, 'cannot exchange less than ' + MIN_FRACTION.toString() + ' yoctoNEAR');
     assert(nearAmount < currentNearAmount, 'not enough NEAR in pool');
 
     const newNear = currentNearAmount - nearAmount;
     const currentBerries = storage.getSome<u128>('berries');
     const newBerries = currentBerries * currentNearAmount / newNear;
     // TODO: What to do with remainder?
-    const berriesPrice = newBerries - currentBerries;
+    const berriesPrice = (newBerries - currentBerries) * MIN_FRACTION;
+
     // TODO: commission
     return berriesPrice;
 }
