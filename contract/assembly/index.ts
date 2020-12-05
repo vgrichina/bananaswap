@@ -20,7 +20,7 @@ const MIN_FRACTION = u128.from('1000000000000');
 const MIN_BALANCE = NEAR_NOMINATION * u128.from(10);
 
 function assertOwner(): void {
-    //assert(context.predecessor == context.contractName, 'must be called by owner');
+    assert(context.predecessor == context.contractName, 'must be called by owner');
 }
 
 export function start(): void {
