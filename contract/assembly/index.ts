@@ -23,10 +23,9 @@ function assertOwner(): void {
     assert(context.predecessor == context.contractName, 'must be called by owner');
 }
 
-export function start(): void {
+export function start(berries: u128): void {
     assertOwner();
-    assert(storage.contains('berries'), 'must deposit berries before starting');
-
+    storage.set('berries', berries);
     storage.set('started', true);
 }
 
