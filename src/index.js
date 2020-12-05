@@ -8,6 +8,7 @@ const { networkId } = getConfig(process.env.NODE_ENV || 'development')
 import { utils } from 'near-api-js'
 
 import Big from 'big.js';
+import { NEAR_NOMINATION } from 'near-api-js/lib/utils/format'
 
 const submitButton = document.querySelector('form button')
 
@@ -104,7 +105,8 @@ async function fetchGreeting() {
     document.querySelector('#berriesBalance').innerHTML = formatBerryAmount(berriesBalance);
 
     const poolAccount = await window.near.account(window.contract.contractId);
-    const { total: poolNearBalance } = await poolAccount.getAccountBalance();
+    let { total: poolNearBalance } = await poolAccount.getAccountBalance();
+    total = Big(total).sub(Big(10).mul(NEAR_NOMINATION));
     document.querySelector('#poolNearBalance').innerHTML = utils.format.formatNearAmount(poolNearBalance, 5);
     const poolBerriesBalance = await account.viewFunction(BERRIES_CONTRACT, 'get_balance', { account_id: poolAccount.accountId });
     document.querySelector('#poolBerriesBalance').innerHTML = formatBerryAmount(poolBerriesBalance);
