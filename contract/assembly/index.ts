@@ -27,7 +27,6 @@ export function start(): void {
     assertOwner();
     assert(storage.contains('berries'), 'must deposit berries before starting');
 
-    const availableBalance = context.accountBalance - MIN_BALANCE;
     storage.set('started', true);
 }
 
@@ -56,7 +55,6 @@ export function getBuyPrice(berries: u128): u128 {
     const resultingBerries = internalBerries - berries;
     const currentNearAmount = (context.accountBalance - MIN_BALANCE) / MIN_FRACTION;
     const newNearAmount =  internalBerries * currentNearAmount / resultingBerries;
-    logging.log('newNearAmount: ' + newNearAmount.toString());
     // TODO: What to do with remainder?
     const nearPrice = (newNearAmount - currentNearAmount) * MIN_FRACTION;
     // TODO: commission
