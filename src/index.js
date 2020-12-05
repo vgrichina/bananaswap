@@ -100,8 +100,14 @@ async function fetchGreeting() {
     const account = await window.walletConnection.account();
     const { total: accountBalance } = await account.getAccountBalance();
     document.querySelector('#nearBalance').innerHTML = utils.format.formatNearAmount(accountBalance, 5);
-    const berriesBalance = await account.viewFunction(BERRIES_CONTRACT, 'get_balance', { account_id: account.accountId });
-    document.querySelector('#berriesBalance').innerHTML = formatBerryAmount(berriesBalance);
+    // const berriesBalance = await account.viewFunction(BERRIES_CONTRACT, 'get_balance', { account_id: account.accountId });
+    // document.querySelector('#berriesBalance').innerHTML = formatBerryAmount(berriesBalance);
+
+    const poolAccount = await window.near.account(window.contract.contractId);
+    const { total: poolNearBalance } = await poolAccount.getAccountBalance();
+    document.querySelector('#poolNearBalance').innerHTML = utils.format.formatNearAmount(poolNearBalance, 5);
+    const poolBerriesBalance = await account.viewFunction(BERRIES_CONTRACT, 'get_balance', { account_id: poolAccount.accountId });
+    document.querySelector('#poolBerriesBalance').innerHTML = formatBerryAmount(poolBerriesBalance);
 }
 
 // `nearInitPromise` gets called on page load
