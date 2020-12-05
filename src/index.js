@@ -11,7 +11,7 @@ import Big from 'big.js';
 
 const submitButton = document.querySelector('form button')
 
-const BOATLOAD_OF_GAS = '35000000000000';
+const BOATLOAD_OF_GAS = '55000000000000';
 const BERRIES_CONTRACT = 'berryclub.ek.near';
 
 
