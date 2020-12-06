@@ -18,6 +18,7 @@ const BERRIES_CONTRACT = 'berryclub.ek.near';
 const NEAR_NOMINATION = u128.from('1000000000000000000000000');
 const MIN_FRACTION = u128.from('1000000000000');
 const MIN_BALANCE = NEAR_NOMINATION * u128.from(10);
+const COMISSION_PERCENT = u128.from(10);
 
 function assertOwner(): void {
     assert(context.predecessor == context.contractName, 'must be called by owner');
@@ -45,6 +46,10 @@ class TransferRawArgs {
     amount: u128;
 }
 
+function withComission(price: u128): u128 {
+    const hundred = u128.from(100);
+    return price * (hundred + COMISSION_PERCENT) / hundred;
+}
 
 export function getBuyPrice(berries: u128): u128 {
     return getBuyPriceInternal(berries, context.accountBalance);
@@ -59,10 +64,8 @@ function getBuyPriceInternal(berries: u128, nearBalance: u128): u128 {
     const resultingBerries = internalBerries - berries;
     const currentNearAmount = (nearBalance - MIN_BALANCE) / MIN_FRACTION;
     const newNearAmount =  internalBerries * currentNearAmount / resultingBerries;
-    // TODO: What to do with remainder?
     const nearPrice = newNearAmount - currentNearAmount;
-    // TODO: commission
-    return nearPrice * MIN_FRACTION;
+    return withComission(nearPrice * MIN_FRACTION);
 }
 
 export function buy(berries: u128): ContractPromise {
@@ -92,11 +95,9 @@ export function getSellPrice(nearAmount: u128): u128 {
 
     const newNear = currentNearAmount - nearAmount;
     const newBerries = currentBerries * currentNearAmount / newNear;
-    // TODO: What to do with remainder?
     const berriesPrice = newBerries - currentBerries;
 
-    // TODO: commission
-    return berriesPrice * MIN_FRACTION;
+    return withComission(berriesPrice * MIN_FRACTION);
 }
 
 function sell(sender_id: string, berries: u128, nearAmount: u128): u128 {
