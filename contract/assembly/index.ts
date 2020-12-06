@@ -100,7 +100,7 @@ function sell(sender_id: string, berries: u128, nearAmount: u128): u128 {
     assert(berriesPrice <= berries, 'not enough berries attached, required ' + berriesPrice.toString());
 
     // TODO: Do we need to lock somehow before transfer end?
-    storage.set('berries', storage.getSome<u128>('berries') - berriesPrice);
+    storage.set('berries', storage.getSome<u128>('berries') + berriesPrice);
     // TODO: Wait somehow for this promise?
     ContractPromiseBatch.create(sender_id).transfer(nearAmount);
 
