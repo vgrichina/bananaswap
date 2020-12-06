@@ -45,14 +45,19 @@ class TransferRawArgs {
     amount: u128;
 }
 
+
 export function getBuyPrice(berries: u128): u128 {
+    return getBuyPriceInternal(berries, context.accountBalance);
+}
+
+function getBuyPriceInternal(berries: u128, nearBalance: u128): u128 {
     const internalBerries = storage.getSome<u128>('berries') / MIN_FRACTION;
     berries = berries / MIN_FRACTION;
     assert(berries > u128.Zero, 'cannot exchange less than ' + MIN_FRACTION.toString() + ' berries');
     assert(berries < internalBerries, 'not enough berries in pool');
 
     const resultingBerries = internalBerries - berries;
-    const currentNearAmount = (context.accountBalance - MIN_BALANCE) / MIN_FRACTION;
+    const currentNearAmount = (nearBalance - MIN_BALANCE) / MIN_FRACTION;
     const newNearAmount =  internalBerries * currentNearAmount / resultingBerries;
     // TODO: What to do with remainder?
     const nearPrice = newNearAmount - currentNearAmount;
@@ -63,7 +68,7 @@ export function getBuyPrice(berries: u128): u128 {
 export function buy(berries: u128): ContractPromise {
     assertPoolStarted();
 
-    const nearPrice = getBuyPrice(berries);
+    const nearPrice = getBuyPriceInternal(berries, context.accountBalance - context.attachedDeposit);
     assert(nearPrice <= context.attachedDeposit, 'not enough NEAR attached, required ' + nearPrice.toString());
 
     storage.set('berries', storage.getSome<u128>('berries') - berries);
@@ -75,6 +80,7 @@ export function buy(berries: u128): ContractPromise {
     // TODO: Do we need to lock somehow before transfer end?
     return ContractPromise.create<TransferRawArgs>(BERRIES_CONTRACT, 'transfer_raw',
         { receiver_id: context.predecessor, amount: berries }, 5000000000000, u128.One);
+    // TODO: How to handle potential transfer errors to refund NEAR?
 }
 
 export function getSellPrice(nearAmount: u128): u128 {
