@@ -85,6 +85,8 @@ document.querySelector('#nearToBuy').onchange = async (event) => {
 // Display the signed-out-flow container
 function signedOutFlow() {
     Array.from(document.querySelectorAll('.signed-out-flow')).forEach(elem => elem.style.display = 'block');
+
+    fetchPoolBalances().catch(console.error)
 }
 
 // Displaying the signed in flow container and fill in account-specific data
@@ -95,7 +97,16 @@ function signedInFlow() {
         el.innerText = window.accountId
     })
 
-    fetchGreeting()
+    fetchGreeting().catch(console.error)
+}
+
+async function fetchPoolBalances() {
+    const poolAccount = await window.near.account(window.contract.contractId);
+    let { total: poolNearBalance } = await poolAccount.getAccountBalance();
+    poolNearBalance = Big(poolNearBalance).sub(Big(MIN_BALANCE).mul(NEAR_NOMINATION.toString())).toFixed(0);
+    document.querySelector('#poolNearBalance').innerHTML = utils.format.formatNearAmount(poolNearBalance, 5);
+    const poolBerriesBalance = await poolAccount.viewFunction(BERRIES_CONTRACT, 'get_balance', { account_id: poolAccount.accountId });
+    document.querySelector('#poolBerriesBalance').innerHTML = formatBerryAmount(poolBerriesBalance);
 }
 
 async function fetchGreeting() {
@@ -105,12 +116,7 @@ async function fetchGreeting() {
     const berriesBalance = await account.viewFunction(BERRIES_CONTRACT, 'get_balance', { account_id: account.accountId });
     document.querySelector('#berriesBalance').innerHTML = formatBerryAmount(berriesBalance);
 
-    const poolAccount = await window.near.account(window.contract.contractId);
-    let { total: poolNearBalance } = await poolAccount.getAccountBalance();
-    poolNearBalance = Big(poolNearBalance).sub(Big(MIN_BALANCE).mul(NEAR_NOMINATION.toString())).toFixed(0);
-    document.querySelector('#poolNearBalance').innerHTML = utils.format.formatNearAmount(poolNearBalance, 5);
-    const poolBerriesBalance = await account.viewFunction(BERRIES_CONTRACT, 'get_balance', { account_id: poolAccount.accountId });
-    document.querySelector('#poolBerriesBalance').innerHTML = formatBerryAmount(poolBerriesBalance);
+    await fetchPoolBalances()
 }
 
 // `nearInitPromise` gets called on page load
