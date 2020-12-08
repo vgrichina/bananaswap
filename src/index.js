@@ -14,6 +14,7 @@ const submitButton = document.querySelector('form button')
 
 const BOATLOAD_OF_GAS = '95000000000000';
 const BERRIES_CONTRACT = 'berryclub.ek.near';
+const MIN_BALANCE = 5;
 
 
 const handleSubmit = handler => async (event) => {
@@ -106,7 +107,7 @@ async function fetchGreeting() {
 
     const poolAccount = await window.near.account(window.contract.contractId);
     let { total: poolNearBalance } = await poolAccount.getAccountBalance();
-    poolNearBalance = Big(poolNearBalance).sub(Big(10).mul(NEAR_NOMINATION.toString())).toFixed(0);
+    poolNearBalance = Big(poolNearBalance).sub(Big(MIN_BALANCE).mul(NEAR_NOMINATION.toString())).toFixed(0);
     document.querySelector('#poolNearBalance').innerHTML = utils.format.formatNearAmount(poolNearBalance, 5);
     const poolBerriesBalance = await account.viewFunction(BERRIES_CONTRACT, 'get_balance', { account_id: poolAccount.accountId });
     document.querySelector('#poolBerriesBalance').innerHTML = formatBerryAmount(poolBerriesBalance);

@@ -17,7 +17,7 @@ import { context, ContractPromise, ContractPromiseBatch, logging, storage, u128 
 const BERRIES_CONTRACT = 'berryclub.ek.near';
 const NEAR_NOMINATION = u128.from('1000000000000000000000000');
 const MIN_FRACTION = u128.from('1000000000000');
-const MIN_BALANCE = NEAR_NOMINATION * u128.from(10);
+const MIN_BALANCE = NEAR_NOMINATION * u128.from(5);
 const COMISSION_PERCENT = u128.from(10);
 
 function assertOwner(): void {
