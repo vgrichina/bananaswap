@@ -83,12 +83,12 @@ document.querySelector('#nearToBuy').onchange = async (event) => {
 
 // Display the signed-out-flow container
 function signedOutFlow() {
-    document.querySelector('#signed-out-flow').style.display = 'block'
+    Array.from(document.querySelectorAll('.signed-out-flow')).forEach(elem => elem.style.display = 'block');
 }
 
 // Displaying the signed in flow container and fill in account-specific data
 function signedInFlow() {
-    document.querySelector('#signed-in-flow').style.display = 'block'
+    Array.from(document.querySelectorAll('.signed-in-flow')).forEach(elem => elem.style.display = 'block')
 
     document.querySelectorAll('.accountId').forEach(el => {
         el.innerText = window.accountId
