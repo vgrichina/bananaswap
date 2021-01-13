@@ -68,6 +68,9 @@ function getBuyPriceInternal(berries: u128, nearBalance: u128): u128 {
     return withComission(nearPrice * MIN_FRACTION);
 }
 
+const TRANSFER_RAW_GAS = 5000000000000;
+const REFUND_GAS = TRANSFER_RAW_GAS;
+
 export function buy(berries: u128): ContractPromise {
     assertPoolStarted();
 
@@ -76,14 +79,22 @@ export function buy(berries: u128): ContractPromise {
 
     storage.set('berries', storage.getSome<u128>('berries') - berries);
 
-    // TODO: Send back extra NEAR
+    // Send back extra NEAR
+    // TODO: Seems like need to have either lock or internal balance update before this is complete?
     ContractPromiseBatch.create(context.predecessor)
         .transfer(context.attachedDeposit - nearPrice);
 
     // TODO: Do we need to lock somehow before transfer end?
     return ContractPromise.create<TransferRawArgs>(BERRIES_CONTRACT, 'transfer_raw',
-        { receiver_id: context.predecessor, amount: berries }, 5000000000000, u128.One);
-    // TODO: How to handle potential transfer errors to refund NEAR?
+        { receiver_id: context.predecessor, amount: berries }, TRANSFER_RAW_GAS, u128.One)
+        .then<TransferRawArgs>(context.contractName, 'refund',
+            { receiver_id: context.predecessor, amount: context.attachedDeposit }, REFUND_GAS);
+}
+
+export function refund(receiver_id: string, amount: u128) {
+    assertTokenContract();
+
+    
 }
 
 export function getSellPrice(nearAmount: u128): u128 {
@@ -127,8 +138,12 @@ function withdrawFromVault(vault_id: u32, receiver_id: string, amount: u128): Co
         'withdraw_from_vault', { receiver_id, amount, vault_id }, 5000000000000);
 }
 
-export function on_receive_with_vault(sender_id: string, amount: u128, vault_id: u32, payload: String): ContractPromise {
+function assertTokenContract() {
     assert(context.predecessor == BERRIES_CONTRACT, "can only be called from token contract");
+}
+
+export function on_receive_with_vault(sender_id: string, amount: u128, vault_id: u32, payload: String): ContractPromise {
+    assertTokenContract();
 
     if (payload.startsWith('sell:')) {
         const parts = payload.split(':');
