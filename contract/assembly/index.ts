@@ -48,7 +48,8 @@ class TransferRawArgs {
 
 function withComission(price: u128): u128 {
     const hundred = u128.from(100);
-    return price * (hundred + COMISSION_PERCENT) / hundred;
+    // TODO: Use muldiv when available
+    return price / hundred * (hundred + COMISSION_PERCENT);
 }
 
 export function getBuyPrice(berries: u128): u128 {
