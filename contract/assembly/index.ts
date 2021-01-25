@@ -134,9 +134,6 @@ export function on_receive_with_vault(sender_id: string, amount: u128, vault_id:
         const parts = payload.split(':');
         const nearAmount = u128.from(parts[1]);
         const berries = sell(sender_id, amount, nearAmount);
-        if (berries < amount) {
-            withdrawFromVault(vault_id, sender_id, amount - berries);
-        }
         return withdrawFromVault(vault_id, context.contractName, berries);
     }
 
