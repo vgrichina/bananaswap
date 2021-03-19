@@ -2,20 +2,13 @@ import 'regenerator-runtime/runtime'
 
 import { initContract, login, logout } from './utils'
 
-import getConfig from './config'
-const { networkId } = getConfig(process.env.NODE_ENV || 'development')
-
 import { utils } from 'near-api-js'
 
 import Big from 'big.js';
 import { NEAR_NOMINATION } from 'near-api-js/lib/utils/format'
 
-const submitButton = document.querySelector('form button')
-
 const BOATLOAD_OF_GAS = '95000000000000';
-const BERRIES_CONTRACT = 'berryclub.ek.near';
 const MIN_BALANCE = 5;
-
 
 const handleSubmit = handler => async (event) => {
     event.preventDefault()
@@ -47,7 +40,7 @@ document.querySelector('#buyForm').onsubmit = handleSubmit(async form => {
 
 document.querySelector('#sellForm').onsubmit = handleSubmit(async form => {
     const account = await window.walletConnection.account();
-    await account.functionCall(BERRIES_CONTRACT, 'transfer_with_vault', {
+    await account.functionCall(await getBerriesContract(), 'transfer_with_vault', {
         receiver_id: window.contract.contractId,
         amount: parseBerryAmount(form.querySelector('#maxBerriesPrice').value),
         payload: `sell:${utils.format.parseNearAmount(form.querySelector('#nearToBuy').value)}`
@@ -100,12 +93,21 @@ function signedInFlow() {
     fetchGreeting().catch(console.error)
 }
 
+let berriesContract;
+async function getBerriesContract() {
+    if (berriesContract) {
+        return berriesContract;
+    }
+    berriesContract = await window.contract.berriesContract();
+    return berriesContract;
+}
+
 async function fetchPoolBalances() {
     const poolAccount = await window.near.account(window.contract.contractId);
     let { total: poolNearBalance } = await poolAccount.getAccountBalance();
     poolNearBalance = Big(poolNearBalance).sub(Big(MIN_BALANCE).mul(NEAR_NOMINATION.toString())).toFixed(0);
     document.querySelector('#poolNearBalance').innerHTML = utils.format.formatNearAmount(poolNearBalance, 5);
-    const poolBerriesBalance = await poolAccount.viewFunction(BERRIES_CONTRACT, 'get_balance', { account_id: poolAccount.accountId });
+    const poolBerriesBalance = await poolAccount.viewFunction(await getBerriesContract(), 'get_balance', { account_id: poolAccount.accountId });
     document.querySelector('#poolBerriesBalance').innerHTML = formatBerryAmount(poolBerriesBalance);
 }
 
@@ -113,7 +115,7 @@ async function fetchGreeting() {
     const account = await window.walletConnection.account();
     const { total: accountBalance } = await account.getAccountBalance();
     document.querySelector('#nearBalance').innerHTML = utils.format.formatNearAmount(accountBalance, 5);
-    const berriesBalance = await account.viewFunction(BERRIES_CONTRACT, 'get_balance', { account_id: account.accountId });
+    const berriesBalance = await account.viewFunction(await getBerriesContract(), 'get_balance', { account_id: account.accountId });
     document.querySelector('#berriesBalance').innerHTML = formatBerryAmount(berriesBalance);
 
     await fetchPoolBalances()

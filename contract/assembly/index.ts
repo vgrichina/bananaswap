@@ -14,20 +14,24 @@
 
 import { context, ContractPromise, ContractPromiseBatch, logging, storage, u128 } from 'near-sdk-as'
 
-const BERRIES_CONTRACT = 'berryclub.ek.near';
 const NEAR_NOMINATION = u128.from('1000000000000000000000000');
 const MIN_FRACTION = u128.from('1000000000000');
 const MIN_BALANCE = NEAR_NOMINATION * u128.from(5);
 const COMISSION_PERCENT = u128.from(5);
 
+export function berriesContract(): string {
+    return storage.get<string>('berriesContract', 'berryclub.ek.near')!;
+}
+
 function assertOwner(): void {
     assert(context.predecessor == context.contractName, 'must be called by owner');
 }
 
-export function start(berries: u128): void {
+export function start(berries: u128, berriesContract: string): void {
     assertOwner();
     storage.set('berries', berries);
     storage.set('started', true);
+    storage.set('berriesContract', berriesContract);
 }
 
 export function stop(): void {
@@ -82,7 +86,7 @@ export function buy(berries: u128): ContractPromise {
         .transfer(context.attachedDeposit - nearPrice);
 
     // TODO: Do we need to lock somehow before transfer end?
-    return ContractPromise.create<TransferRawArgs>(BERRIES_CONTRACT, 'transfer_raw',
+    return ContractPromise.create<TransferRawArgs>(berriesContract(), 'transfer_raw',
         { receiver_id: context.predecessor, amount: berries }, 5000000000000, u128.One);
     // TODO: How to handle potential transfer errors to refund NEAR?
 }
@@ -124,12 +128,12 @@ class WithdrawFromVaultArgs {
 }
 
 function withdrawFromVault(vault_id: u32, receiver_id: string, amount: u128): ContractPromise {
-    return ContractPromise.create<WithdrawFromVaultArgs>(BERRIES_CONTRACT,
+    return ContractPromise.create<WithdrawFromVaultArgs>(berriesContract(),
         'withdraw_from_vault', { receiver_id, amount, vault_id }, 5000000000000);
 }
 
 export function on_receive_with_vault(sender_id: string, amount: u128, vault_id: u32, payload: String): ContractPromise {
-    assert(context.predecessor == BERRIES_CONTRACT, "can only be called from token contract");
+    assert(context.predecessor == berriesContract(), "can only be called from token contract");
 
     if (payload.startsWith('sell:')) {
         const parts = payload.split(':');
