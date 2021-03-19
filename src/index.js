@@ -107,7 +107,7 @@ async function fetchPoolBalances() {
     let { total: poolNearBalance } = await poolAccount.getAccountBalance();
     poolNearBalance = Big(poolNearBalance).sub(Big(MIN_BALANCE).mul(NEAR_NOMINATION.toString())).toFixed(0);
     document.querySelector('#poolNearBalance').innerHTML = utils.format.formatNearAmount(poolNearBalance, 5);
-    const poolBerriesBalance = await poolAccount.viewFunction(await getBerriesContract(), 'get_balance', { account_id: poolAccount.accountId });
+    const poolBerriesBalance = await contract.berries();
     document.querySelector('#poolBerriesBalance').innerHTML = formatBerryAmount(poolBerriesBalance);
 }
 

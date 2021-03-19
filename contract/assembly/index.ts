@@ -23,6 +23,10 @@ export function berriesContract(): string {
     return storage.get<string>('berriesContract', 'berryclub.ek.near')!;
 }
 
+export function berries(): u128 {
+    return storage.get<u128>('berries', u128.from(0))!;
+}
+
 function assertOwner(): void {
     assert(context.predecessor == context.contractName, 'must be called by owner');
 }
