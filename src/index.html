@@ -38,62 +38,66 @@
       <p>Pool 🍌: <b id="poolBerriesBalance">...</b></p>
       <p>Pool NEAR: <b id="poolNearBalance">...</b></p>
 
-      <h2>NEAR → 🍌</h2>
-      <form id="buyForm">
-        <fieldset>
-          <label
-            for="berriesToBuy"
-            style="display: block; margin-bottom: 0.5em"
-          >
-            🍌  to buy
-          </label>
-          <input
-            autocomplete="off"
-            id="berriesToBuy"
-          />
-          <label
-            for="maxNearPrice"
-            style="display: block; margin-bottom: 0.5em"
-          >
-            Max NEAR to spend
-          </label>
-          <input
-            autocomplete="off"
-            id="maxNearPrice"
-          />
-          <div class="signed-in-flow" style="display: none;">
-            <button style="border-radius: 5px; display: block; margin-top: 0.5em">Buy</button>
-          </div>
-        </fieldset>
-      </form>
-      <h2>🍌 → NEAR</h2>
-      <form id="sellForm">
-        <fieldset>
-          <label
-            for="nearToBuy"
-            style="display: block; margin-bottom: 0.5em"
-          >
-            Desired NEAR
-          </label>
-          <input
-            autocomplete="off"
-            id="nearToBuy"
-          />
-          <label
-            for="maxBerriesPrice"
-            style="display: block; margin-bottom: 0.5em"
-          >
-            Max 🍌 to sell
-          </label>
-          <input
-            autocomplete="off"
-            id="maxBerriesPrice"
-          />
-          <div class="signed-in-flow" style="display: none;">
-            <button style="border-radius: 5px; display: block; margin-top: 0.5em">Sell</button>
-          </div>
-        </fieldset>
-      </form>
+      <ul class="tabs">
+        <li><a href="#sellForm">NEAR → 🍌</a></li>
+        <li><a href="#buyForm">🍌 → NEAR</a></li>
+      </ul>
+      <div id="forms">
+        <form id="buyForm">
+          <fieldset>
+            <label
+              for="berriesToBuy"
+              style="display: block; margin-bottom: 0.5em"
+            >
+              🍌  to buy
+            </label>
+            <input
+              autocomplete="off"
+              id="berriesToBuy"
+            />
+            <label
+              for="maxNearPrice"
+              style="display: block; margin-bottom: 0.5em"
+            >
+              Max NEAR to spend
+            </label>
+            <input
+              autocomplete="off"
+              id="maxNearPrice"
+            />
+            <div class="signed-in-flow" style="display: none;">
+              <button style="border-radius: 5px; display: block; margin-top: 0.5em">Buy</button>
+            </div>
+          </fieldset>
+        </form>
+        <form id="sellForm">
+          <fieldset>
+            <label
+              for="nearToBuy"
+              style="display: block; margin-bottom: 0.5em"
+            >
+              Desired NEAR
+            </label>
+            <input
+              autocomplete="off"
+              id="nearToBuy"
+            />
+            <label
+              for="maxBerriesPrice"
+              style="display: block; margin-bottom: 0.5em"
+            >
+              Max 🍌 to sell
+            </label>
+            <input
+              autocomplete="off"
+              id="maxBerriesPrice"
+            />
+            <div class="signed-in-flow" style="display: none;">
+              <button style="border-radius: 5px; display: block; margin-top: 0.5em">Sell</button>
+            </div>
+          </fieldset>
+        </form>
+      </div>
       <hr>
       <p>
         If you wanna build apps like this, check out
