@@ -115,6 +115,31 @@ function sell(sender_id: string, berries: u128, nearAmount: u128): u128 {
     return berriesPrice;
 }
 
+export function getSellPriceBerries(berries: u128): u128 {
+    const currentNearAmount = (context.accountBalance - MIN_BALANCE) / MIN_FRACTION;
+    const currentBerries = storage.getSome<u128>('berries') / MIN_FRACTION;
+    assert(berries != u128.Zero, 'berries to exchange should be greater than 0');
+
+    const newBerries = currentBerries + berries;
+    const newNear = currentBerries * currentNearAmount / newBerries;
+    const nearPrice = newNear - currentNearAmount;
+
+    return withComission(nearPrice * MIN_FRACTION);
+}
+
+function sellBerries(sender_id: string, berries: u128, nearAmount: u128): u128 {
+    assertPoolStarted();
+
+    const nearPrice = getSellPrice(nearAmount);
+    assert(nearPrice >= nearAmount, nearPrice.toString() + ' is smaller than required ' + nearAmount.toString() + ' yoctoNEAR');
+
+    storage.set('berries', storage.getSome<u128>('berries') + berries);
+    // TODO: Wait somehow for this promise?
+    ContractPromiseBatch.create(sender_id).transfer(nearPrice);
+
+    return nearPrice;
+}
+
 @nearBindgen
 class WithdrawFromVaultArgs {
     // TODO: Sort out u32/u64/u53 situation
@@ -136,6 +161,13 @@ export function on_receive_with_vault(sender_id: string, amount: u128, vault_id:
         const nearAmount = u128.from(parts[1]);
         const berries = sell(sender_id, amount, nearAmount);
         return withdrawFromVault(vault_id, context.contractName, berries);
+    }
+
+    if (payload.startsWith('sellBerries:')) {
+        const parts = payload.split(':');
+        const nearAmount = u128.from(parts[1]);
+        sellBerries(sender_id, amount, nearAmount);
+        return withdrawFromVault(vault_id, context.contractName, amount);
     }
 
     if (payload == 'deposit') {
