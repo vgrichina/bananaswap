@@ -12,12 +12,14 @@
  *
  */
 
-import { context, ContractPromise, ContractPromiseBatch, logging, storage, u128 } from 'near-sdk-as'
+import { context, ContractPromise, ContractPromiseBatch, logging, storage, u128, util } from 'near-sdk-as'
 
 const NEAR_NOMINATION = u128.from('1000000000000000000000000');
 const MIN_FRACTION = u128.from('1000000000000');
 const MIN_BALANCE = NEAR_NOMINATION * u128.from(5);
 const COMISSION_PERCENT = u128.from(5);
+
+const CALLBACK_GAS: u64 = 30_000_000_000_000;
 
 export function berriesContract(): string {
     return storage.get<string>('berriesContract', 'berryclub.ek.near')!;
@@ -85,14 +87,31 @@ export function buy(berries: u128): ContractPromise {
 
     storage.set('berries', storage.getSome<u128>('berries') - berries);
 
-    // TODO: Send back extra NEAR
+    // Send back extra NEAR
     ContractPromiseBatch.create(context.predecessor)
         .transfer(context.attachedDeposit - nearPrice);
 
     // TODO: Do we need to lock somehow before transfer end?
+    // TODO: Looks like need to keep internal counter for NEAR as well?
+
+    const callbackArgs: TransferRawArgs = { receiver_id: context.predecessor, amount: context.attachedDeposit };
     return ContractPromise.create<TransferRawArgs>(berriesContract(), 'transfer_raw',
-        { receiver_id: context.predecessor, amount: berries }, 5000000000000, u128.One);
-    // TODO: How to handle potential transfer errors to refund NEAR?
+        { receiver_id: context.predecessor, amount: berries }, 5000000000000, u128.One)
+        .then(context.contractName, 'buyTransferCallback', callbackArgs, CALLBACK_GAS);
+}
+
+export function buyTransferCallback(receiver_id: string, amount: u128): void {
+    assert(context.predecessor == context.contractName, 'canOnlyBeCalledBySelf');
+
+    const results = ContractPromise.getResults();
+    assert(results.length == 1, 'expectedOnePromiseResult');
+
+    // TODO: Return a promise?
+    if (results[0].status == 2) {
+        // Failure, need to refund NEAR
+        ContractPromiseBatch.create(receiver_id)
+            .transfer(amount);
+    }
 }
 
 export function getSellPrice(nearAmount: u128): u128 {
