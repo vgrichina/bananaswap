@@ -33,7 +33,7 @@ const handleSubmit = handler => async (event) => {
 }
 
 document.querySelector('#buyForm').onsubmit = handleSubmit(async form => {
-    await window.contract.buy({
+    await window.contract.placeBuyOrder({
         berries: parseBerryAmount(form.querySelector('#berriesToBuy').value)
     }, BOATLOAD_OF_GAS, utils.format.parseNearAmount(form.querySelector('#maxNearPrice').value));
 });

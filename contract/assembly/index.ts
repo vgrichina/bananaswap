@@ -12,12 +12,11 @@
  *
  */
 
-import { context, ContractPromise, ContractPromiseBatch, logging, storage, u128, util } from 'near-sdk-as'
+import { context, ContractPromise, ContractPromiseBatch, logging, storage, u128, util, PersistentDeque } from 'near-sdk-as'
 
 const NEAR_NOMINATION = u128.from('1000000000000000000000000');
 const MIN_FRACTION = u128.from('1000000000000');
-const MIN_BALANCE = NEAR_NOMINATION * u128.from(5);
-const COMISSION_PERCENT = u128.from(5);
+const PRICE_TICK = NEAR_NOMINATION / MIN_FRACTION / u128.from('10000');
 
 const CALLBACK_GAS: u64 = 30_000_000_000_000;
 
@@ -25,17 +24,12 @@ export function berriesContract(): string {
     return storage.get<string>('berriesContract', 'berryclub.ek.near')!;
 }
 
-export function berries(): u128 {
-    return storage.get<u128>('berries', u128.from(0))!;
-}
-
 function assertOwner(): void {
     assert(context.predecessor == context.contractName, 'must be called by owner');
 }
 
-export function start(berries: u128, berriesContract: string): void {
+export function start(berriesContract: string): void {
     assertOwner();
-    storage.set('berries', berries);
     storage.set('started', true);
     storage.set('berriesContract', berriesContract);
 }
@@ -56,90 +50,94 @@ class TransferRawArgs {
     amount: u128;
 }
 
-function withComission(price: u128): u128 {
-    const hundred = u128.from(100);
-    // TODO: Use muldiv when available
-    return price / hundred * (hundred + COMISSION_PERCENT);
+@nearBindgen
+class OrderInfo {
+    sender: string;
+    nearAmount: u128;
+    berries: u128;
 }
 
-export function getBuyPrice(berries: u128): u128 {
-    return getBuyPriceInternal(berries, context.accountBalance);
-}
-
-function getBuyPriceInternal(berries: u128, nearBalance: u128): u128 {
-    const internalBerries = storage.getSome<u128>('berries') / MIN_FRACTION;
-    berries = berries / MIN_FRACTION;
-    assert(berries > u128.Zero, 'cannot exchange less than ' + MIN_FRACTION.toString() + ' berries');
-    assert(berries < internalBerries, 'not enough berries in pool');
-
-    const resultingBerries = internalBerries - berries;
-    const currentNearAmount = (nearBalance - MIN_BALANCE) / MIN_FRACTION;
-    const newNearAmount =  internalBerries * currentNearAmount / resultingBerries;
-    const nearPrice = newNearAmount - currentNearAmount;
-    return withComission(nearPrice * MIN_FRACTION);
-}
-
-export function buy(berries: u128): ContractPromise {
+export function placeBuyOrder(berries: u128): void {
     assertPoolStarted();
 
-    const nearPrice = getBuyPriceInternal(berries, context.accountBalance - context.attachedDeposit);
-    assert(nearPrice <= context.attachedDeposit, 'not enough NEAR attached, required ' + nearPrice.toString());
+    assert(berries >= MIN_FRACTION, 'cannot exchange less than ' + MIN_FRACTION.toString() + ' berries');
 
-    storage.set('berries', storage.getSome<u128>('berries') - berries);
+    // TODO: Charge for storage deposit!
+    const nearAmount = context.attachedDeposit;
+    // TODO: Make sure doesn't overflow?
+    const price = priceWithTicks(berries, nearAmount);
 
-    // Send back extra NEAR
-    ContractPromiseBatch.create(context.predecessor)
-        .transfer(context.attachedDeposit - nearPrice);
+    assert(price > u128.Zero, 'too small amount of NEAR attached');
 
-    // TODO: Do we need to lock somehow before transfer end?
-    // TODO: Looks like need to keep internal counter for NEAR as well?
+    const priceBucket = price / PRICE_TICK;
+    assert(priceBucket > u128.Zero, 'price is too small');
 
-    const callbackArgs: TransferRawArgs = { receiver_id: context.predecessor, amount: context.attachedDeposit };
-    return ContractPromise.create<TransferRawArgs>(berriesContract(), 'transfer_raw',
-        { receiver_id: context.predecessor, amount: berries }, 5000000000000, u128.One)
-        .then(context.contractName, 'buyTransferCallback', callbackArgs, CALLBACK_GAS);
-}
+    const buyOrders = new PersistentDeque<OrderInfo>('buy:' + priceBucket.toString());
+    buyOrders.pushBack({
+        sender: context.predecessor,
+        nearAmount,
+        berries
+    });
 
-export function buyTransferCallback(receiver_id: string, amount: u128): void {
-    assert(context.predecessor == context.contractName, 'canOnlyBeCalledBySelf');
-
-    const results = ContractPromise.getResults();
-    assert(results.length == 1, 'expectedOnePromiseResult');
-
-    // TODO: Return a promise?
-    if (results[0].status == 2) {
-        // Failure, need to refund NEAR
-        ContractPromiseBatch.create(receiver_id)
-            .transfer(amount);
+    if (storage.get<u128>('buy:maxPrice', u128.Min) < priceBucket) {
+        storage.set('buy:maxPrice', priceBucket);
     }
 }
 
-export function getSellPrice(nearAmount: u128): u128 {
-    const currentNearAmount = (context.accountBalance - MIN_BALANCE) / MIN_FRACTION;
-    const currentBerries = storage.getSome<u128>('berries') / MIN_FRACTION;
-    nearAmount = nearAmount / MIN_FRACTION;
-    assert(nearAmount > u128.Zero, 'cannot exchange less than ' + MIN_FRACTION.toString() + ' yoctoNEAR');
-    assert(nearAmount < currentNearAmount, 'not enough NEAR in pool');
-
-    const newNear = currentNearAmount - nearAmount;
-    const newBerries = currentBerries * currentNearAmount / newNear;
-    const berriesPrice = newBerries - currentBerries;
-
-    return withComission(berriesPrice * MIN_FRACTION);
+function priceWithTicks(berries: u128, nearAmount: u128): u128 {
+    return nearAmount / (berries / MIN_FRACTION) * PRICE_TICK / MIN_FRACTION;
 }
 
-function sell(sender_id: string, berries: u128, nearAmount: u128): u128 {
+function placeSellOrder(sender: string, berries: u128, nearAmount: u128): void {
     assertPoolStarted();
 
-    const berriesPrice = getSellPrice(nearAmount);
-    assert(berriesPrice <= berries, 'not enough berries attached, required ' + berriesPrice.toString());
+    assert(nearAmount >= MIN_FRACTION, 'cannot exchange less than ' + MIN_FRACTION.toString() + ' yoctoNEAR');
 
-    // TODO: Do we need to lock somehow before transfer end?
-    storage.set('berries', storage.getSome<u128>('berries') + berriesPrice);
-    // TODO: Wait somehow for this promise?
-    ContractPromiseBatch.create(sender_id).transfer(nearAmount);
+    // TODO: Charge for storage deposit!
+    const price = priceWithTicks(berries, nearAmount);
+    // TODO: Make sure to round to proper direction
+    logging.log('nearAmount ' + nearAmount.toString());
+    logging.log('berries ' + berries.toString());
+    logging.log('price ' + price.toString());
 
-    return berriesPrice;
+    assert(price > u128.Zero, 'too small amount of berries attached');
+
+    const priceBucket = price / PRICE_TICK;
+    assert(priceBucket > u128.Zero, 'price is too small');
+
+    const sellOrders = new PersistentDeque<OrderInfo>('sell:' + priceBucket.toString());
+    sellOrders.pushBack({
+        sender,
+        nearAmount,
+        berries
+    });
+
+    if (storage.get<u128>('sell:minPrice', u128.Max) > priceBucket) {
+        storage.set('sell:minPrice', priceBucket);
+    }
+}
+
+export function executeTrades(): ContractPromise {
+    const sellMinPrice = storage.getSome<u128>('sell:minPrice');
+    const buyMaxPrice = storage.getSome<u128>('buy:maxPrice');
+    if (sellMinPrice < buyMaxPrice) {
+        logging.log('No matching orders');
+        return;
+    }
+
+    const sellOrders = new PersistentDeque<OrderInfo>('sell:' + sellMinPrice.toString());
+    const buyOrders = new PersistentDeque<OrderInfo>('sell:' + buyMaxPrice.toString());
+    const sellOrder = sellOrders.popFront();
+    const buyOrder = buyOrders.popFront();
+    // TODO
+    // if (sellOrder.berries >= buyOrder.berries) {
+    //     sellOrder.berries -= buyOrder.berries;
+    //     sellOrder.nearAmount -= buyOrder.nearAmount / priceWithTicks(sellOrder.berries, sellOrder.nearAmount) * PRICE_TICK;
+    //     if (sellOrder.berries > buyOrder.berries) {
+    //         sellOrders.pushFront(sellOrder);
+    //     }
+    //     return ContractPromise.create<TransferRawArgs>(berriesContract(), 'transfer_raw', { receiver_id: buyOrder.sender, amount: buyOrder.berries } )
+    // }
 }
 
 @nearBindgen
@@ -161,13 +159,7 @@ export function on_receive_with_vault(sender_id: string, amount: u128, vault_id:
     if (payload.startsWith('sell:')) {
         const parts = payload.split(':');
         const nearAmount = u128.from(parts[1]);
-        const berries = sell(sender_id, amount, nearAmount);
-        return withdrawFromVault(vault_id, context.contractName, berries);
-    }
-
-    if (payload == 'deposit') {
-        assert(!storage.contains('started'), "deposit not supported after pool is started");
-        storage.set('berries', storage.get('berries', u128.from(0))! + amount);
+        placeSellOrder(sender_id, amount, nearAmount);
         return withdrawFromVault(vault_id, context.contractName, amount);
     }
 
